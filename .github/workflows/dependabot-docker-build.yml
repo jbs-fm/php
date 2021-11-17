@@ -18,7 +18,7 @@ jobs:
         id: regex-match
         with:
           text: ${{ github.event.pull_request.title }}
-          regex: '/ to (.*)$'
+          regex: '/ to (.*)$/'
       - name: Create tag
         uses: actions/github-script@v3
         with:
