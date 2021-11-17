@@ -34,6 +34,6 @@ jobs:
 #           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Enable tag php release
         if: ${{ steps.dependabot-metadata.outputs.update-type != 'version-update:semver-major' }}
-        run: gh release create ${{ steps.dependabot-metadata.outputs.updated-dependencies-jso }}
+        run: gh release create ${{ steps.dependabot-metadata.outputs.updated-dependencies-json }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
