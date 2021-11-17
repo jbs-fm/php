@@ -1,4 +1,4 @@
-name: Dependabot Pull Request Approve, Merge
+name: Dependabot Pull Request Approve, Merge & Tag
 
 on: pull_request_target
 
@@ -7,8 +7,6 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.actor == 'dependabot[bot]' }}
     steps:
-      # This first step will fail if there's no metadata and so the approval
-      # will not occur.
       - name: Dependabot metadata
         id: dependabot-metadata
         uses: dependabot/fetch-metadata@v1.1.1
@@ -19,7 +17,19 @@ jobs:
         with:
           text: ${{ github.event.pull_request.title }}
           regex: ' to (.*)$'
+      - name: Approve a PR
+        run: gh pr review --approve "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Enable auto-merge for Dependabot PRs
+        if: ${{ steps.dependabot-metadata.outputs.update-type == 'version-update:semver-patch' }}
+        run: gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Create tag
+        if: ${{ steps.dependabot-metadata.outputs.update-type == 'version-update:semver-patch' }}
         uses: actions/github-script@v3
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -28,49 +38,5 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               ref: "refs/tags/${{ steps.regex-match.outputs.group1 }}",
-              sha: context.sha
+              sha: ${{ github.event.pull_request.merge_commit_sha }}
             })
-      # Then docker build
-      -
-        name: Checkout
-        if: ${{ steps.dependabot-metadata.outputs.update-type == 'version-update:semver-patch' }}
-        uses: actions/checkout@v2
-      -
-        name: Docker meta
-        if: ${{ steps.dependabot-metadata.outputs.update-type == 'version-update:semver-patch' }}
-        id: meta
-        uses: docker/metadata-action@v3
-        with:
-          images: ghcr.io/jbs-fm/php
-          tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-      -
-        name: Set up QEMU
-        if: ${{ steps.dependabot-metadata.outputs.update-type == 'version-update:semver-patch' }}
-        uses: docker/setup-qemu-action@v1
-      -
-        name: Set up Docker Buildx
-        if: ${{ steps.dependabot-metadata.outputs.update-type == 'version-update:semver-patch' }}
-        uses: docker/setup-buildx-action@v1
-      -
-        name: Login to GitHub Container Registry
-        if: ${{ steps.dependabot-metadata.outputs.update-type == 'version-update:semver-patch' }}
-        uses: docker/login-action@v1 
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      -
-        name: Build and push
-        if: ${{ steps.dependabot-metadata.outputs.update-type == 'version-update:semver-patch' }}
-        uses: docker/build-push-action@v2
-        with:
-          context: .
-          file: ./Dockerfile
-          platforms: linux/amd64
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
