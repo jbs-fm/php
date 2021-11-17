@@ -1,4 +1,4 @@
-name: Dependabot Pull Request Approve, Merge & Tag
+name: Dependabot Pull Request Approve, Merge
 
 on: pull_request_target
 
@@ -26,14 +26,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       # Finally, this sets the PR to allow auto-merging for patch and minor
       # updates if all checks pass
-#       - name: Enable auto-merge for Dependabot PRs
-#         if: ${{ steps.dependabot-metadata.outputs.update-type != 'version-update:semver-major' }}
-#         run: gh pr merge --auto --squash "$PR_URL"
-#         env:
-#           PR_URL: ${{ github.event.pull_request.html_url }}
-#           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Enable tag php release
+      - name: Enable auto-merge for Dependabot PRs
         if: ${{ steps.dependabot-metadata.outputs.update-type != 'version-update:semver-major' }}
-        run: gh release create ${{ steps.dependabot-metadata.outputs.updated-dependencies-json }}
+        run: gh pr merge --auto --squash "$PR_URL"
         env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
