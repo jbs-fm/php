@@ -1,4 +1,4 @@
-FROM php:8.0.13-fpm-alpine
+FROM php:8.1.12-fpm-alpine
 
 RUN echo "http://dl-cdn.alpinelinux.org/alpine/latest-stable/main" >> /etc/apk/repositories
 ARG APK_COMMON_DEPENDENCIES="bash dcron busybox-suid libcap curl zip unzip git"
